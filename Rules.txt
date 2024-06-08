@@ -1,0 +1,92 @@
+Here’s the updated draft outline with your latest specifications:
+
+### Draft Outline of Game Rules for Spotle
+
+#### Objective
+The objective of the game is to guess the correct video game based on feedback provided after each guess. Players aim to guess the game in as few attempts as possible, with a maximum of 10 guesses allowed.
+
+#### Game Setup
+1. **Categories**: The game will feature multiple categories, including:
+   - Year of Release
+   - Genre
+   - Average Length to Complete
+   - Publisher
+   - Platform
+   - Developer
+   - Country of Origin
+   - Average User Rating
+
+2. **Game Selection**: A game will be randomly selected from the database for each day.
+
+#### Gameplay
+1. **Starting the Game**:
+   - The player initiates a new game.
+   - A random game is selected from the database.
+   - No initial clues are given.
+
+2. **Making a Guess**:
+   - The player inputs their guess for the video game.
+   - The guess is submitted via an input field on the game interface.
+
+3. **Feedback**:
+   - After each guess, the system provides feedback on how the guessed game matches the selected game across different categories.
+   - Categories with exact matches are highlighted in green (e.g., Developer, Publisher, Platform).
+   - Categories with close matches are indicated by shaded boxes to show proximity:
+     - **Year of Release**: "Earlier", "Later" with shading to indicate how close the guess is.
+     - **Average Length to Complete**: "Shorter", "Longer" with shading to indicate proximity.
+     - **Country of Origin**: Shading to indicate geographical proximity (e.g., US and Canada).
+   - Categories with no matches are also indicated.
+
+4. **Example Feedback**:
+   - For a guessed game "Mario" and the selected game "Zelda":
+     - **Developer**: Nintendo (green)
+     - **Publisher**: Nintendo (green)
+     - **Country of Origin**: Japan (green)
+     - **Year of Release**: 1998 (Later, shaded to indicate proximity)
+     - **Genre**: Platformer (No match)
+     - **Average Length to Complete**: 20 hours (Longer, shaded to indicate proximity)
+
+5. **Limit on Guesses**:
+   - Players have a maximum of 10 guesses to find the correct game.
+   - If the player does not guess correctly within 10 guesses, the correct answer is revealed.
+
+#### Winning and Feedback
+1. **Winning the Game**:
+   - The game is won when the player correctly guesses the video game.
+   - A congratulatory message is displayed, which is more effusive for quicker guesses.
+
+2. **Tracking Results**:
+   - Results are tracked to encourage streaks and faster answers.
+   - A graph is presented to show when players typically get the answer right.
+
+3. **Sharing Results**:
+   - Players can easily share their daily and all-time results with friends without revealing the answer.
+   - Sharing options can include social media, direct messaging, or a shareable link.
+
+#### Additional Features
+1. **One Game Per Day**:
+   - Only one game is available each day, similar to Wordle.
+   - Players can come back daily to play a new game.
+
+2. **Send to a Friend**:
+   - Players can pick a game from the database to send to a friend for guessing, adding a multiplayer and viral element to the game.
+
+3. **Achievements and Rewards**:
+   - Implement achievements for milestones (e.g., guessing correctly with only a few guesses, streaks of correct guesses).
+   - Rewards can include badges, points, or unlockable content.
+
+### Example Game Flow
+1. Player starts a new game.
+2. A random game is selected from the database.
+3. Player makes their first guess (e.g., "Mario").
+4. Feedback is provided:
+   - **Developer**: Nintendo (green)
+   - **Publisher**: Nintendo (green)
+   - **Country of Origin**: Japan (green)
+   - **Year of Release**: 1998 (Later, shaded to indicate proximity)
+   - **Genre**: Platformer (No match)
+   - **Average Length to Complete**: 20 hours (Longer, shaded to indicate proximity)
+5. Player makes another guess based on the feedback.
+6. The process repeats until the player guesses the game correctly or reaches 10 guesses.
+7. If the player does not guess correctly within 10 guesses, the correct answer is revealed.
+

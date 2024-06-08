@@ -1,0 +1,33 @@
+/* src/components/GameBoard.css */
+
+.game-board {
+  text-align: center;
+}
+
+input {
+  margin: 10px;
+  padding: 5px;
+}
+
+button {
+  margin: 10px;
+  padding: 5px 10px;
+}
+
+.guesses {
+  margin-top: 20px;
+}
+
+.guess {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.categories {
+  margin-top: 10px;
+}
+
+.category {
+  margin: 5px 0;
+}

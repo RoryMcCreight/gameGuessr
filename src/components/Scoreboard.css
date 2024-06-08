@@ -1,0 +1,12 @@
+.scoreboard {
+    margin-top: 2rem;
+  }
+  
+  .correct {
+    color: green;
+  }
+  
+  .incorrect {
+    color: red;
+  }
+  

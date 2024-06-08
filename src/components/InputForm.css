@@ -1,0 +1,13 @@
+.input-form {
+    margin-bottom: 1rem;
+  }
+  
+  .input-form input {
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+  }
+  
+  .input-form button {
+    padding: 0.5rem 1rem;
+  }
+  
