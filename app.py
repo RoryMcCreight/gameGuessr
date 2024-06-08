@@ -1,6 +1,6 @@
 import os
 from flask import Flask, redirect, url_for, session, request
-from flask_oauthlib.client import OAuth
+from authlib.integrations.flask_client import OAuth
 import sqlite3
 
 app = Flask(__name__)
@@ -14,18 +14,16 @@ def get_db():
 
 # Configure OAuth
 oauth = OAuth(app)
-igdb = oauth.remote_app(
+igdb = oauth.register(
     'igdb',
-    consumer_key=os.environ.get('IGDB_CLIENT_ID'),  # Use environment variables
-    consumer_secret=os.environ.get('IGDB_CLIENT_SECRET'),  # Use environment variables
-    request_token_params={
-        'scope': 'user:read:email'  # Adjust the scope as needed
-    },
-    base_url='https://api.igdb.com/v4/',
-    request_token_url=None,
-    access_token_method='POST',
+    client_id=os.environ.get('IGDB_CLIENT_ID'),  # Use environment variables
+    client_secret=os.environ.get('IGDB_CLIENT_SECRET'),  # Use environment variables
+    authorize_url='https://id.twitch.tv/oauth2/authorize',
+    authorize_params=None,
     access_token_url='https://id.twitch.tv/oauth2/token',
-    authorize_url='https://id.twitch.tv/oauth2/authorize'
+    access_token_params=None,
+    refresh_token_url=None,
+    client_kwargs={'scope': 'user:read:email'},
 )
 
 @app.route('/')
@@ -34,7 +32,8 @@ def index():
 
 @app.route('/login')
 def login():
-    return igdb.authorize(callback=url_for('authorized', _external=True))
+    redirect_uri = url_for('authorized', _external=True)
+    return igdb.authorize_redirect(redirect_uri)
 
 @app.route('/logout')
 def logout():
@@ -43,17 +42,13 @@ def logout():
 
 @app.route('/callback')
 def authorized():
-    response = igdb.authorized_response()
-    if response is None or response.get('access_token') is None:
-        return 'Access denied: reason={} error={}'.format(
-            request.args['error_reason'],
-            request.args['error_description']
-        )
-
-    session['igdb_token'] = (response['access_token'], '')
+    token = igdb.authorize_access_token()
+    if not token:
+        return 'Access denied'
+    session['igdb_token'] = token
     return redirect(url_for('index'))
 
-@igdb.tokengetter
+@oauth.tokengetter
 def get_igdb_oauth_token():
     return session.get('igdb_token')
 
