@@ -1,7 +1,10 @@
 import os
-from flask import Flask, redirect, url_for, session, request
+from flask import Flask, redirect, url_for, session, request, jsonify, render_template
 from authlib.integrations.flask_client import OAuth
 import sqlite3
+from datetime import date
+
+from game_logic import Game
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'default_secret_key')
@@ -37,7 +40,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('igdb_token')
+    session.pop('igdb_token', None)
     return redirect(url_for('index'))
 
 @app.route('/callback')
@@ -47,10 +50,6 @@ def authorized():
         return 'Access denied'
     session['igdb_token'] = token
     return redirect(url_for('index'))
-
-@oauth.tokengetter
-def get_igdb_oauth_token():
-    return session.get('igdb_token')
 
 @app.route('/test-post', methods=['POST'])
 def test_post():
