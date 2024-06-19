@@ -1,33 +1,23 @@
-/* src/components/GameBoard.css */
-
 .game-board {
-  text-align: center;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-input {
-  margin: 10px;
-  padding: 5px;
+.game-board form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-button {
-  margin: 10px;
-  padding: 5px 10px;
-}
-
-.guesses {
-  margin-top: 20px;
-}
-
-.guess {
-  border: 1px solid #ddd;
+.game-board button {
   padding: 10px;
-  margin-bottom: 10px;
+  font-size: 16px;
 }
 
-.categories {
-  margin-top: 10px;
-}
-
-.category {
-  margin: 5px 0;
+.guess-result {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
 }

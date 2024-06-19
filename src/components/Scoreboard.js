@@ -1,19 +1,29 @@
-import React from 'react';
-import './Scoreboard.css';
+import React, { useState, useEffect } from 'react';
 
-function Scoreboard({ score, guesses }) {
+const Scoreboard = () => {
+  const [scores, setScores] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/games')
+      .then(response => response.json())
+      .then(data => setScores(data))
+      .catch(error => console.error('Error fetching scores:', error));
+  }, []);
+
+  if (!scores.length) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="scoreboard">
-      <h3>Score: {score}</h3>
+    <div>
+      <h1>Scoreboard</h1>
       <ul>
-        {guesses.map((guess, index) => (
-          <li key={index} className={guess.correct ? 'correct' : 'incorrect'}>
-            {guess.gameName} - {guess.correct ? 'Correct' : 'Incorrect'}
-          </li>
+        {scores.map((score, index) => (
+          <li key={index}>{score.name}: {score.points}</li>
         ))}
       </ul>
     </div>
   );
-}
+};
 
 export default Scoreboard;

@@ -1,149 +1,131 @@
+import logging
 import os
-from flask import Flask, redirect, url_for, session, request, jsonify, render_template
-from authlib.integrations.flask_client import OAuth
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 import sqlite3
 from datetime import date
-
 from game_logic import Game
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'default_secret_key')
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Enable CORS for all routes with specific origins
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+
 DATABASE = 'database/guessr.db'
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row  # This helps to return rows as dictionaries
     return conn
-
-# Configure OAuth
-oauth = OAuth(app)
-igdb = oauth.register(
-    'igdb',
-    client_id=os.environ.get('IGDB_CLIENT_ID'),  # Use environment variables
-    client_secret=os.environ.get('IGDB_CLIENT_SECRET'),  # Use environment variables
-    authorize_url='https://id.twitch.tv/oauth2/authorize',
-    authorize_params=None,
-    access_token_url='https://id.twitch.tv/oauth2/token',
-    access_token_params=None,
-    refresh_token_url=None,
-    client_kwargs={'scope': 'user:read:email'},
-)
 
 @app.route('/')
 def index():
     return 'Welcome to the Guessr API!'
 
-@app.route('/login')
-def login():
-    redirect_uri = url_for('authorized', _external=True)
-    return igdb.authorize_redirect(redirect_uri)
-
-@app.route('/logout')
-def logout():
-    session.pop('igdb_token', None)
-    return redirect(url_for('index'))
-
-@app.route('/callback')
-def authorized():
-    token = igdb.authorize_access_token()
-    if not token:
-        return 'Access denied'
-    session['igdb_token'] = token
-    return redirect(url_for('index'))
-
 @app.route('/test-post', methods=['POST'])
 def test_post():
+    logging.debug("Test POST endpoint accessed")
+    logging.debug(f"Request data: {request.json}")
     return jsonify({"message": "POST request received"})
 
 @app.route('/daily-game', methods=['GET'])
 def get_daily_game():
-    print("Daily game endpoint accessed")
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT game_id FROM DailyGames WHERE date = ?", (date.today().isoformat(),))
-    result = cur.fetchone()
-    if result:
-        game_id = result[0]
-        cur.execute("SELECT * FROM Games WHERE id = ?", (game_id,))
-        game = cur.fetchone()
-        conn.close()
-        return jsonify(game)
-    else:
-        conn.close()
-        return jsonify({"error": "No game found for today"}), 404
+    logging.debug("Daily game endpoint accessed")
+    try:
+        with get_db() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT game_id FROM DailyGames WHERE date = ?", (date.today().isoformat(),))
+            result = cur.fetchone()
+            if result:
+                game_id = result['game_id']
+                cur.execute("SELECT * FROM Games WHERE id = ?", (game_id,))
+                game = cur.fetchone()
+                logging.debug(f"Game found: {dict(game)}")
+                return jsonify(dict(game))
+            else:
+                logging.debug("No game found for today")
+                return jsonify({"error": "No game found for today"}), 404
+    except Exception as e:
+        logging.error(f"Error in /daily-game: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/guess', methods=['POST'])
 def validate_guess():
-    print("Guess endpoint accessed")
-    print("Request method:", request.method)
-    print("Request content type:", request.content_type)
-    print("Request headers:", request.headers)
-    print("Request JSON body:", request.json)
-    
+    logging.debug("Guess endpoint accessed")
     data = request.json
+    logging.debug(f"Request data: {data}")
+
     if not data or 'title' not in data:
-        print("Invalid request")
+        logging.error("Invalid request")
         return jsonify({"error": "Invalid request"}), 400
-    
+
     guess_title = data.get('title')
-    print(f"Guess title: {guess_title}")
-    
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM Games WHERE title = ?", (guess_title,))
-    guess = cur.fetchone()
-    
-    if not guess:
-        print("Game not found")
-        conn.close()
-        return jsonify({"error": "Game not found"}), 404
+    logging.debug(f"Guess title: {guess_title}")
 
-    current_date = date.today().isoformat()
-    print(f"Current date: {current_date}")
-    
-    cur.execute("SELECT game_id FROM DailyGames WHERE date = ?", (current_date,))
-    result = cur.fetchone()
-    if result:
-        daily_game_id = result[0]
-        cur.execute("SELECT * FROM Games WHERE id = ?", (daily_game_id,))
-        daily_game = cur.fetchone()
-        
-        clues = {
-            "year_of_release": guess[2] == daily_game[2],
-            "genre": guess[3] == daily_game[3],
-            "average_length_to_complete": guess[4] == daily_game[4],
-            "publisher": guess[5] == daily_game[5],
-            "average_user_rating": guess[6] == daily_game[6]
-        }
+    try:
+        with get_db() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM Games WHERE title = ?", (guess_title,))
+            guess = cur.fetchone()
+            if not guess:
+                logging.debug("Game not found")
+                return jsonify({"error": "Game not found"}), 404
 
-        conn.close()
-        print("Returning clues")
-        return jsonify(clues)
-    else:
-        print("No daily game found")
-        conn.close()
-        return jsonify({"error": "No daily game found"}), 404
+            current_date = date.today().isoformat()
+            cur.execute("SELECT game_id FROM DailyGames WHERE date = ?", (current_date,))
+            result = cur.fetchone()
+            if result:
+                daily_game_id = result['game_id']
+                cur.execute("SELECT * FROM Games WHERE id = ?", (daily_game_id,))
+                daily_game = cur.fetchone()
 
-@app.route('/games', methods=['GET'])
+                clues = {
+                    "release_year": guess['release_year'] == daily_game['release_year'],
+                    "genre": guess['genre'] == daily_game['genre'],
+                    "game_length": guess['game_length'] == daily_game['game_length'],
+                    "publisher": guess['publisher'] == daily_game['publisher'],
+                    "rating": guess['rating'] == daily_game['rating']
+                }
+
+                logging.debug(f"Clues: {clues}")
+                return jsonify(clues)
+            else:
+                logging.debug("No daily game found")
+                return jsonify({"error": "No daily game found"}), 404
+    except Exception as e:
+        logging.error(f"Error in /guess: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/games', methods=['GET'])
 def get_games():
-    print("Games endpoint accessed")
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM Games")
-    games = cur.fetchall()
-    conn.close()
-    return jsonify(games)
+    logging.debug("Games endpoint accessed")
+    try:
+        with get_db() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT title FROM Games")
+            games = cur.fetchall()
+            logging.debug(f"Games: {games}")
+            return jsonify([dict(game) for game in games])
+    except Exception as e:
+        logging.error(f"Error in /api/games: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/new_game', methods=['POST'])
 def new_game():
+    logging.debug("New game endpoint accessed")
     global game
-    game = Game()
-    return jsonify({"message": "New game started"})
+    try:
+        game = Game()
+        logging.debug("New game started")
+        return jsonify({"message": "New game started"})
+    except Exception as e:
+        logging.error(f"Error in /new_game: {e}")
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/play', methods=['GET'])
-def play():
-    return render_template('index.html')
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
